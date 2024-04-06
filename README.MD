@@ -41,3 +41,11 @@ pip install selenium
 ```
 
 Además, debes asegurarte de tener instalado un navegador compatible (por ejemplo, Firefox) y su controlador WebDriver correspondiente. En este caso, se está utilizando Firefox, por lo que necesitarías tener GeckoDriver instalado y configurado en tu sistema. Puedes descargar GeckoDriver desde el sitio web oficial de Selenium: https://github.com/mozilla/geckodriver
+
+## Iniciar el script
+
+Como este script se ha desarrollado utilizando Python3, tras tener instaladas en nuestro equipo todas las dependencias necesarias, iniciarlo es tan sencillo como escribir en la terminal:
+```
+python3 index.py
+```
+Este comando se lanza desde la misma carpeta en la que tengamos guardado el script.
