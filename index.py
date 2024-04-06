@@ -3,13 +3,19 @@ from tkinter import simpledialog, messagebox
 import re
 import time
 import random
+from urllib.parse import urlparse
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import ElementNotInteractableException
-from selenium.common.exceptions import StaleElementReferenceException, ElementClickInterceptedException, NoSuchWindowException
-from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import (
+    ElementNotInteractableException,
+    NoSuchElementException,
+    StaleElementReferenceException,
+    ElementClickInterceptedException,
+    NoSuchWindowException,
+    TimeoutException
+)
 
 def validar_url(url):
     # Patrón de expresión regular para validar una URL
@@ -22,11 +28,18 @@ def validar_url(url):
         r'(?:/?|[/?]\S+)$', re.IGNORECASE)
     return re.match(patron_url, url) is not None
 
+def es_enlace_interno(enlace, dominio):
+    parsed_enlace = urlparse(enlace)
+    return parsed_enlace.netloc == dominio
+
 def navegar_enlaces(url, tiempo_espera_min=3, tiempo_espera_max=5):
     try:
         # Configura el navegador
         driver = webdriver.Firefox()
         driver.get(url)
+
+        # Extraer el dominio de la URL proporcionada por el usuario
+        dominio = urlparse(url).netloc
 
         while True:
             # Esperar a que la página se cargue completamente
@@ -36,14 +49,24 @@ def navegar_enlaces(url, tiempo_espera_min=3, tiempo_espera_max=5):
                 try:
                     # Obtener todos los enlaces de la página
                     enlaces = driver.find_elements(By.TAG_NAME, 'a')
-                    # No toma como enlace el que dice "Salta al contenido principal"
-                    enlaces = [enlace for enlace in enlaces if enlace.is_displayed() and "Salta al contenido principal" not in enlace.text]
+                    # Saltar al contenido principal
+                    enlaces = [enlace for enlace in enlaces if enlace.is_displayed() and "Saltar al contenido principal" not in enlace.text]
+                    break
+                except NoSuchElementException:
+                    print("No se encontraron enlaces en la página.")
                     break
                 except StaleElementReferenceException:
                     continue
 
+           # if not enlaces:
+            #    print("No se encontraron más enlaces en la página.")
+             #   break
+
+            # Filtrar solo los enlaces internos al dominio proporcionado por el usuario
+            enlaces = [enlace for enlace in enlaces if es_enlace_interno(enlace.get_attribute('href'), dominio)]
+
             if not enlaces:
-                print("No se encontraron más enlaces en la página.")
+                print("No se encontraron enlaces internos en la página.")
                 break
 
             # Escoger un enlace aleatorio de entre los disponibles para hacer clic
@@ -59,12 +82,15 @@ def navegar_enlaces(url, tiempo_espera_min=3, tiempo_espera_max=5):
             time.sleep(1)
 
             try:
-                # Hacer clic en el enlace
-                enlace.click()
-            except ElementClickInterceptedException:
-                print("El enlace está siendo interceptado, intentando hacer clic nuevamente...")
-                # Si el clic falla, intenta hacer clic usando JavaScript
-                driver.execute_script("arguments[0].click();", enlace)
+                enlace_clickeable = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, f"//a[@href='{enlace.get_attribute('href')}']")))
+                if enlace_clickeable.is_displayed():
+                    enlace_clickeable.click()
+                else:
+                    print("El enlace no está visible en este momento.")
+            except ElementNotInteractableException:
+                print("El enlace no es interactuable en este momento.")
+            except TimeoutException:
+                print("El enlace no pudo ser encontrado o no es clickeable.")
 
             # Tiempo de espera aleatorio entre clics, con aviso por terminal
             tiempo_espera = random.randint(tiempo_espera_min, tiempo_espera_max)

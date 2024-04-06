@@ -15,6 +15,7 @@ Esto es algo muy básico, se pueden pulir muchas cosas para hacer más efectivo 
 - Se ha añadido soporte para que el usuario inserte la URL a visitar, para indicar el tiempo máximo y el tiempo mínimo de espera entre salto al siguiente enlace, desde una ventana.
 - Se ha establecido que la URL debe tener el formato indicado.
 - También se han añadido controles para que el tiempo máximo y mínimos sean números enteros. Además el tiempo máximo debe ser mayor que el tiempo mínimo.
+- Se establece una comprobación para que no se haga clic en un enlace que lleve fuera del dominio indicado por el usuario.
 
 ## Dependencias
 
